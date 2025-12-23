@@ -3,15 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Search, Menu, X, IceCream2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { siteConfig } from '@/config/site';
 import { Button } from '@/components/ui/button';
-
-const navLinks = [
-  { name: 'Home', path: '/' },
-  { name: 'About Us', path: '/about' },
-  { name: 'Shop', path: '/shop' },
-  { name: 'FAQ', path: '/faq' },
-  { name: 'Contact', path: '/contact' },
-];
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -33,7 +26,7 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
           ? 'bg-background/95 backdrop-blur-md shadow-soft'
           : 'bg-transparent'
@@ -44,7 +37,7 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <motion.div
-              whileHover={{ rotate: 15 }}
+              whileHover={{ rotate: 15, scale: 1.1 }}
               transition={{ type: 'spring', stiffness: 300 }}
             >
               <IceCream2 className="w-10 h-10 text-primary" />
@@ -57,7 +50,7 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <ul className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {siteConfig.navigation.map((link) => (
               <li key={link.path}>
                 <Link
                   to={link.path}
@@ -81,15 +74,19 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
-            <button
+            <motion.button
               className="p-2 text-muted-foreground hover:text-primary transition-colors hidden sm:block"
               aria-label="Search"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
             >
               <Search className="w-5 h-5" />
-            </button>
+            </motion.button>
 
             <Link to="/cart" className="relative p-2">
-              <ShoppingCart className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <ShoppingCart className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
+              </motion.div>
               {totalItems > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -101,22 +98,43 @@ export function Header() {
               )}
             </Link>
 
-            <Button variant="hero" size="sm" asChild className="hidden sm:flex">
-              <Link to="/contact">Contact Us</Link>
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="hero" size="sm" asChild className="hidden sm:flex">
+                <Link to="/contact">Contact Us</Link>
+              </Button>
+            </motion.div>
 
             {/* Mobile Menu Button */}
-            <button
+            <motion.button
               className="lg:hidden p-2"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
+              whileTap={{ scale: 0.95 }}
             >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
+              <AnimatePresence mode="wait">
+                {isMobileMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <X className="w-6 h-6" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="menu"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Menu className="w-6 h-6" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
 
@@ -127,11 +145,17 @@ export function Header() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
               className="lg:hidden overflow-hidden bg-background border-t border-border"
             >
               <ul className="py-4 space-y-2">
-                {navLinks.map((link) => (
-                  <li key={link.path}>
+                {siteConfig.navigation.map((link, index) => (
+                  <motion.li 
+                    key={link.path}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
                     <Link
                       to={link.path}
                       className={`block px-4 py-3 font-medium transition-colors ${
@@ -142,13 +166,18 @@ export function Header() {
                     >
                       {link.name}
                     </Link>
-                  </li>
+                  </motion.li>
                 ))}
-                <li className="px-4 pt-2">
+                <motion.li 
+                  className="px-4 pt-2"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: siteConfig.navigation.length * 0.05 }}
+                >
                   <Button variant="hero" className="w-full" asChild>
                     <Link to="/contact">Contact Us</Link>
                   </Button>
-                </li>
+                </motion.li>
               </ul>
             </motion.div>
           )}

@@ -4,7 +4,8 @@ import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 import { z } from 'zod';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { sendContactWhatsApp } from '@/lib/api';
+import { siteConfig } from '@/config/site';
 import { toast } from 'sonner';
 
 const contactSchema = z.object({
@@ -17,11 +18,20 @@ const contactSchema = z.object({
 
 type ContactForm = z.infer<typeof contactSchema>;
 
-const businessHours = [
-  { day: 'Monday - Friday', hours: '10:00 AM - 10:00 PM' },
-  { day: 'Saturday', hours: '9:00 AM - 11:00 PM' },
-  { day: 'Sunday', hours: '10:00 AM - 9:00 PM' },
-];
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 
 export default function Contact() {
   const [formData, setFormData] = useState<Partial<ContactForm>>({});
@@ -54,15 +64,10 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.functions.invoke('send-whatsapp', {
-        body: {
-          type: 'contact',
-          formData: result.data,
-        },
-      });
+      const response = await sendContactWhatsApp(result.data as any);
 
-      if (error) {
-        console.error('WhatsApp error:', error);
+      if (!response.success) {
+        console.error('API error:', response.error);
         toast.error('Message sent but notification failed. We will contact you soon.');
       } else {
         toast.success('Message sent successfully! We will get back to you soon.');
@@ -89,11 +94,15 @@ export default function Contact() {
       
       <section className="section-padding">
         <div className="container-custom">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <motion.div 
+            className="grid lg:grid-cols-2 gap-12"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {/* Contact Form */}
             <motion.div 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
+              variants={itemVariants}
               className="bg-card rounded-2xl shadow-medium overflow-hidden"
             >
               <div className="bg-gradient-primary p-6 text-primary-foreground">
@@ -106,14 +115,18 @@ export default function Contact() {
               
               <form onSubmit={handleSubmit} className="p-8 space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
+                  <motion.div 
+                    className="group"
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <label className="form-label-ice">First Name *</label>
                     <input 
                       type="text" 
                       name="firstName"
                       value={formData.firstName || ''} 
                       onChange={handleChange} 
-                      className={`form-input-ice ${errors.firstName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                      className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.firstName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                       placeholder="John"
                     />
                     {errors.firstName && (
@@ -125,15 +138,19 @@ export default function Contact() {
                         {errors.firstName}
                       </motion.p>
                     )}
-                  </div>
-                  <div>
+                  </motion.div>
+                  <motion.div 
+                    className="group"
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <label className="form-label-ice">Last Name *</label>
                     <input 
                       type="text" 
                       name="lastName"
                       value={formData.lastName || ''} 
                       onChange={handleChange} 
-                      className={`form-input-ice ${errors.lastName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                      className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.lastName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                       placeholder="Doe"
                     />
                     {errors.lastName && (
@@ -145,16 +162,20 @@ export default function Contact() {
                         {errors.lastName}
                       </motion.p>
                     )}
-                  </div>
+                  </motion.div>
                 </div>
-                <div>
+                <motion.div 
+                  className="group"
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <label className="form-label-ice">Email *</label>
                   <input 
                     type="email" 
                     name="email"
                     value={formData.email || ''} 
                     onChange={handleChange} 
-                    className={`form-input-ice ${errors.email ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                    className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.email ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                     placeholder="john@example.com"
                   />
                   {errors.email && (
@@ -166,15 +187,19 @@ export default function Contact() {
                       {errors.email}
                     </motion.p>
                   )}
-                </div>
-                <div>
+                </motion.div>
+                <motion.div 
+                  className="group"
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <label className="form-label-ice">Phone *</label>
                   <input 
                     type="tel" 
                     name="phone"
                     value={formData.phone || ''} 
                     onChange={handleChange} 
-                    className={`form-input-ice ${errors.phone ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                    className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.phone ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                     placeholder="+1 (555) 000-0000"
                   />
                   {errors.phone && (
@@ -186,15 +211,19 @@ export default function Contact() {
                       {errors.phone}
                     </motion.p>
                   )}
-                </div>
-                <div>
+                </motion.div>
+                <motion.div 
+                  className="group"
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <label className="form-label-ice">Message *</label>
                   <textarea 
                     name="message"
                     value={formData.message || ''} 
                     onChange={handleChange} 
                     rows={5} 
-                    className={`form-input-ice resize-none ${errors.message ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                    className={`form-input-ice resize-none transition-all duration-300 group-hover:shadow-soft ${errors.message ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                     placeholder="How can we help you?"
                   />
                   {errors.message && (
@@ -206,8 +235,11 @@ export default function Contact() {
                       {errors.message}
                     </motion.p>
                   )}
-                </div>
-                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }} 
+                  whileTap={{ scale: 0.98 }}
+                >
                   <Button 
                     type="submit" 
                     variant="hero" 
@@ -236,63 +268,62 @@ export default function Contact() {
 
             {/* Contact Info */}
             <motion.div 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
+              variants={containerVariants}
               className="space-y-6"
             >
               <motion.div 
+                variants={itemVariants}
                 className="bg-card rounded-2xl shadow-soft p-8 hover-lift"
-                whileHover={{ y: -5 }}
               >
                 <h3 className="font-display text-xl font-semibold mb-6">Contact Information</h3>
                 <div className="space-y-4">
                   <motion.div 
-                    className="flex items-start gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
-                    whileHover={{ x: 5 }}
+                    className="flex items-start gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-all duration-300"
+                    whileHover={{ x: 8, transition: { duration: 0.2 } }}
                   >
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <MapPin className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-muted-foreground">123 Sweet Street, Ice Cream City, IC 12345</span>
+                    <span className="text-muted-foreground">{siteConfig.contact.address}</span>
                   </motion.div>
                   <motion.div 
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
-                    whileHover={{ x: 5 }}
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-all duration-300"
+                    whileHover={{ x: 8, transition: { duration: 0.2 } }}
                   >
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Phone className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-muted-foreground">(123) 456-7890</span>
+                    <span className="text-muted-foreground">{siteConfig.contact.phone}</span>
                   </motion.div>
                   <motion.div 
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
-                    whileHover={{ x: 5 }}
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-all duration-300"
+                    whileHover={{ x: 8, transition: { duration: 0.2 } }}
                   >
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Mail className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-muted-foreground">hello@icedelights.com</span>
+                    <span className="text-muted-foreground">{siteConfig.contact.email}</span>
                   </motion.div>
                 </div>
               </motion.div>
 
               <motion.div 
+                variants={itemVariants}
                 className="bg-card rounded-2xl shadow-soft p-8 hover-lift"
-                whileHover={{ y: -5 }}
               >
                 <h3 className="font-display text-xl font-semibold mb-6 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-primary" />
                   Business Hours
                 </h3>
                 <div className="space-y-3">
-                  {businessHours.map((h, index) => (
+                  {siteConfig.businessHours.map((h, index) => (
                     <motion.div 
                       key={h.day} 
-                      className="flex justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                      className="flex justify-between p-3 rounded-lg hover:bg-secondary/50 transition-all duration-300"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      whileHover={{ x: 5 }}
+                      whileHover={{ x: 8, transition: { duration: 0.2 } }}
                     >
                       <span className="font-medium">{h.day}</span>
                       <span className="text-primary font-medium">{h.hours}</span>
@@ -302,12 +333,11 @@ export default function Contact() {
               </motion.div>
 
               <motion.div 
-                className="bg-card rounded-2xl shadow-soft overflow-hidden h-64"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
+                variants={itemVariants}
+                className="bg-card rounded-2xl shadow-soft overflow-hidden h-64 hover-lift"
               >
                 <iframe 
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=-122.5,37.7,-122.3,37.8" 
+                  src={siteConfig.mapEmbed}
                   width="100%" 
                   height="100%" 
                   style={{ border: 0 }} 
@@ -315,7 +345,7 @@ export default function Contact() {
                 />
               </motion.div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </main>
