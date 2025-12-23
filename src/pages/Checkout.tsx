@@ -4,7 +4,9 @@ import { motion } from 'framer-motion';
 import { z } from 'zod';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
+import { OrderSummary } from '@/components/OrderSummary';
 import { useCart } from '@/context/CartContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const checkoutSchema = z.object({
@@ -31,7 +33,7 @@ const citiesByState: Record<string, string[]> = {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { state: cartState, getItemsByCategory, grandTotal, clearCart } = useCart();
+  const { state: cartState, getItemsByCategory, subtotal, shipping, grandTotal, clearCart } = useCart();
   const [formData, setFormData] = useState<Partial<CheckoutForm>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,15 +71,45 @@ export default function Checkout() {
 
     setIsSubmitting(true);
 
-    // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Send order via WhatsApp
+      const { error } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          type: 'order',
+          formData: result.data,
+          orderData: {
+            itemsByCategory: itemsByCategory.map(cat => ({
+              category: cat.category,
+              items: cat.items.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                category: item.category,
+              })),
+              subtotal: cat.subtotal,
+            })),
+            subtotal,
+            shipping,
+            grandTotal,
+          },
+        },
+      });
 
-    // Clear cart and navigate to thank you page
-    clearCart();
-    toast.success('Order placed successfully!');
-    navigate('/thank-you');
-    
-    setIsSubmitting(false);
+      if (error) {
+        console.error('WhatsApp error:', error);
+        toast.error('Order placed but notification failed. We will contact you soon.');
+      } else {
+        toast.success('Order placed successfully!');
+      }
+
+      clearCart();
+      navigate('/thank-you');
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (cartState.items.length === 0) {
@@ -86,6 +118,10 @@ export default function Checkout() {
   }
 
   const availableCities = formData.state ? citiesByState[formData.state] || [] : [];
+
+  const inputVariants = {
+    focus: { scale: 1.01, transition: { duration: 0.2 } },
+  };
 
   return (
     <main className="pt-20">
@@ -98,7 +134,7 @@ export default function Checkout() {
         ]}
       />
 
-      <section className="py-16">
+      <section className="section-padding">
         <div className="container-custom">
           <form onSubmit={handleSubmit}>
             <div className="grid lg:grid-cols-3 gap-8">
@@ -109,11 +145,14 @@ export default function Checkout() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-card rounded-2xl shadow-soft p-8"
                 >
-                  <h2 className="font-display text-2xl font-semibold mb-8">Billing Address</h2>
+                  <h2 className="font-display text-2xl font-semibold mb-8 flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">1</span>
+                    Billing Address
+                  </h2>
 
                   <div className="grid sm:grid-cols-2 gap-6">
                     {/* First Name */}
-                    <div>
+                    <motion.div whileFocus="focus" variants={inputVariants}>
                       <label htmlFor="firstName" className="form-label-ice">
                         First Name *
                       </label>
@@ -123,13 +162,19 @@ export default function Checkout() {
                         name="firstName"
                         value={formData.firstName || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.firstName ? 'border-destructive' : ''}`}
+                        className={`form-input-ice ${errors.firstName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="John"
                       />
                       {errors.firstName && (
-                        <p className="text-destructive text-sm mt-1">{errors.firstName}</p>
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-destructive text-sm mt-1"
+                        >
+                          {errors.firstName}
+                        </motion.p>
                       )}
-                    </div>
+                    </motion.div>
 
                     {/* Last Name */}
                     <div>
@@ -142,11 +187,17 @@ export default function Checkout() {
                         name="lastName"
                         value={formData.lastName || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.lastName ? 'border-destructive' : ''}`}
+                        className={`form-input-ice ${errors.lastName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="Doe"
                       />
                       {errors.lastName && (
-                        <p className="text-destructive text-sm mt-1">{errors.lastName}</p>
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-destructive text-sm mt-1"
+                        >
+                          {errors.lastName}
+                        </motion.p>
                       )}
                     </div>
 
@@ -161,11 +212,17 @@ export default function Checkout() {
                         name="email"
                         value={formData.email || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.email ? 'border-destructive' : ''}`}
+                        className={`form-input-ice ${errors.email ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="john@example.com"
                       />
                       {errors.email && (
-                        <p className="text-destructive text-sm mt-1">{errors.email}</p>
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-destructive text-sm mt-1"
+                        >
+                          {errors.email}
+                        </motion.p>
                       )}
                     </div>
 
@@ -180,11 +237,17 @@ export default function Checkout() {
                         name="phone"
                         value={formData.phone || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.phone ? 'border-destructive' : ''}`}
+                        className={`form-input-ice ${errors.phone ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="+1 (555) 000-0000"
                       />
                       {errors.phone && (
-                        <p className="text-destructive text-sm mt-1">{errors.phone}</p>
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-destructive text-sm mt-1"
+                        >
+                          {errors.phone}
+                        </motion.p>
                       )}
                     </div>
 
@@ -198,7 +261,7 @@ export default function Checkout() {
                         name="state"
                         value={formData.state || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.state ? 'border-destructive' : ''}`}
+                        className={`form-input-ice ${errors.state ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                       >
                         <option value="">Select State</option>
                         {states.map((state) => (
@@ -208,7 +271,13 @@ export default function Checkout() {
                         ))}
                       </select>
                       {errors.state && (
-                        <p className="text-destructive text-sm mt-1">{errors.state}</p>
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-destructive text-sm mt-1"
+                        >
+                          {errors.state}
+                        </motion.p>
                       )}
                     </div>
 
@@ -222,7 +291,7 @@ export default function Checkout() {
                         name="city"
                         value={formData.city || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.city ? 'border-destructive' : ''}`}
+                        className={`form-input-ice ${errors.city ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         disabled={!formData.state}
                       >
                         <option value="">Select City</option>
@@ -233,7 +302,13 @@ export default function Checkout() {
                         ))}
                       </select>
                       {errors.city && (
-                        <p className="text-destructive text-sm mt-1">{errors.city}</p>
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-destructive text-sm mt-1"
+                        >
+                          {errors.city}
+                        </motion.p>
                       )}
                     </div>
 
@@ -248,11 +323,17 @@ export default function Checkout() {
                         name="zipCode"
                         value={formData.zipCode || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.zipCode ? 'border-destructive' : ''}`}
+                        className={`form-input-ice ${errors.zipCode ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="12345"
                       />
                       {errors.zipCode && (
-                        <p className="text-destructive text-sm mt-1">{errors.zipCode}</p>
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-destructive text-sm mt-1"
+                        >
+                          {errors.zipCode}
+                        </motion.p>
                       )}
                     </div>
                   </div>
@@ -268,16 +349,25 @@ export default function Checkout() {
                       value={formData.message || ''}
                       onChange={handleChange}
                       rows={4}
-                      className={`form-input-ice resize-none ${errors.message ? 'border-destructive' : ''}`}
+                      className={`form-input-ice resize-none ${errors.message ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                       placeholder="Special requests or delivery instructions..."
                     />
                     {errors.message && (
-                      <p className="text-destructive text-sm mt-1">{errors.message}</p>
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-destructive text-sm mt-1"
+                      >
+                        {errors.message}
+                      </motion.p>
                     )}
                   </div>
 
                   {/* Terms */}
-                  <div className="mt-8 flex items-start gap-3">
+                  <motion.div 
+                    className="mt-8 flex items-start gap-3 p-4 bg-secondary/30 rounded-xl"
+                    whileHover={{ scale: 1.01 }}
+                  >
                     <input
                       type="checkbox"
                       id="terms"
@@ -287,56 +377,49 @@ export default function Checkout() {
                     />
                     <label htmlFor="terms" className="text-sm text-muted-foreground">
                       By clicking the button, you agree to the{' '}
-                      <a href="/faq" className="text-primary hover:underline">
+                      <a href="/faq" className="text-primary hover:underline font-medium">
                         Terms and Conditions
                       </a>
                     </label>
-                  </div>
+                  </motion.div>
 
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    size="lg"
-                    className="w-full mt-8"
-                    disabled={isSubmitting}
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                   >
-                    {isSubmitting ? 'Processing...' : 'Place Order Now'}
-                  </Button>
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      size="lg"
+                      className="w-full mt-8"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center gap-2">
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                            className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
+                          />
+                          Processing...
+                        </span>
+                      ) : (
+                        'Place Order Now'
+                      )}
+                    </Button>
+                  </motion.div>
                 </motion.div>
               </div>
 
               {/* Order Summary */}
               <div className="lg:col-span-1">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-card rounded-2xl shadow-soft p-6 sticky top-28"
-                >
-                  <h3 className="font-display text-xl font-semibold mb-6">Order Summary</h3>
-
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {itemsByCategory.map(({ category, items }) => (
-                      <div key={category}>
-                        <p className="text-xs text-muted-foreground mb-2">Shop &gt; {category}</p>
-                        {items.map((item) => (
-                          <div key={item.id} className="flex justify-between py-2 border-b border-border">
-                            <div>
-                              <p className="font-medium">{item.quantity} x {item.name}</p>
-                              <p className="text-sm text-muted-foreground line-clamp-1">{item.description}</p>
-                            </div>
-                            <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex justify-between font-bold text-lg mt-6 pt-4 border-t border-border">
-                    <span>Grand Total</span>
-                    <span className="text-primary">${grandTotal.toFixed(2)}</span>
-                  </div>
-                </motion.div>
+                <OrderSummary
+                  itemsByCategory={itemsByCategory}
+                  subtotal={subtotal}
+                  shipping={shipping}
+                  grandTotal={grandTotal}
+                  variant="checkout"
+                />
               </div>
             </div>
           </form>

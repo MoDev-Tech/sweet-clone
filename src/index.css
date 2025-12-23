@@ -2,11 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-/* IceDelights Design System - Playful Ice Cream Parlor Aesthetic */
+/* IceDelights Design System - Easily Customizable */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 @layer base {
   :root {
+    /* ========================================
+       🎨 BRAND COLORS - Edit these to change the entire theme
+       ======================================== */
+    
+    /* Primary brand color - Main accent (pink/coral) */
+    --brand-hue: 340;
+    --brand-saturation: 85%;
+    --brand-lightness: 60%;
+    
+    /* Secondary brand color - Accent color (coral/orange) */
+    --accent-hue: 15;
+    --accent-saturation: 90%;
+    --accent-lightness: 65%;
+
+    /* ========================================
+       GENERATED THEME COLORS (from brand colors)
+       ======================================== */
+    
     /* Warm, creamy background palette */
     --background: 30 50% 98%;
     --foreground: 340 20% 15%;
@@ -18,11 +36,11 @@
     --popover: 30 40% 99%;
     --popover-foreground: 340 20% 15%;
 
-    /* Primary pink/coral - signature ice cream parlor color */
-    --primary: 340 85% 60%;
+    /* Primary - generated from brand colors */
+    --primary: var(--brand-hue) var(--brand-saturation) var(--brand-lightness);
     --primary-foreground: 0 0% 100%;
-    --primary-light: 340 85% 70%;
-    --primary-dark: 340 85% 50%;
+    --primary-light: var(--brand-hue) var(--brand-saturation) 70%;
+    --primary-dark: var(--brand-hue) var(--brand-saturation) 50%;
 
     /* Secondary - soft vanilla cream */
     --secondary: 35 60% 95%;
@@ -32,8 +50,8 @@
     --muted: 30 20% 94%;
     --muted-foreground: 340 10% 45%;
 
-    /* Accent - playful coral */
-    --accent: 15 90% 65%;
+    /* Accent - from accent brand color */
+    --accent: var(--accent-hue) var(--accent-saturation) var(--accent-lightness);
     --accent-foreground: 0 0% 100%;
 
     /* Destructive */
@@ -43,7 +61,7 @@
     /* Borders and inputs */
     --border: 30 30% 88%;
     --input: 30 30% 88%;
-    --ring: 340 85% 60%;
+    --ring: var(--brand-hue) var(--brand-saturation) var(--brand-lightness);
 
     --radius: 0.75rem;
 
@@ -56,26 +74,28 @@
     --caramel: 30 70% 50%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(30 50% 98%) 0%, hsl(340 40% 95%) 50%, hsl(30 50% 98%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(340 85% 60%) 0%, hsl(15 90% 65%) 100%);
-    --gradient-header: linear-gradient(180deg, hsl(340 40% 97%) 0%, hsl(30 50% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(30 50% 98%) 0%, hsl(var(--brand-hue) 40% 95%) 50%, hsl(30 50% 98%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(var(--brand-hue) 40% 97%) 0%, hsl(30 50% 98%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(30 40% 99%) 0%, hsl(30 30% 97%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(var(--brand-hue) 70% 45%) 0%, hsl(var(--accent-hue) 80% 50%) 100%);
 
     /* Shadows */
-    --shadow-soft: 0 4px 20px -2px hsl(340 30% 50% / 0.1);
-    --shadow-medium: 0 8px 30px -4px hsl(340 30% 50% / 0.15);
-    --shadow-strong: 0 12px 40px -6px hsl(340 30% 50% / 0.2);
-    --shadow-glow: 0 0 30px hsl(340 85% 60% / 0.3);
+    --shadow-soft: 0 4px 20px -2px hsl(var(--brand-hue) 30% 50% / 0.1);
+    --shadow-medium: 0 8px 30px -4px hsl(var(--brand-hue) 30% 50% / 0.15);
+    --shadow-strong: 0 12px 40px -6px hsl(var(--brand-hue) 30% 50% / 0.2);
+    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.3);
+    --shadow-hover: 0 20px 40px -8px hsl(var(--brand-hue) 30% 50% / 0.25);
 
     /* Sidebar */
     --sidebar-background: 30 40% 98%;
     --sidebar-foreground: 340 20% 20%;
-    --sidebar-primary: 340 85% 60%;
+    --sidebar-primary: var(--brand-hue) var(--brand-saturation) var(--brand-lightness);
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 30 60% 95%;
     --sidebar-accent-foreground: 340 20% 20%;
     --sidebar-border: 30 30% 88%;
-    --sidebar-ring: 340 85% 60%;
+    --sidebar-ring: var(--brand-hue) var(--brand-saturation) var(--brand-lightness);
   }
 
   .dark {
@@ -88,10 +108,10 @@
     --popover: 340 20% 10%;
     --popover-foreground: 30 50% 95%;
 
-    --primary: 340 80% 55%;
+    --primary: var(--brand-hue) 80% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 340 80% 65%;
-    --primary-dark: 340 80% 45%;
+    --primary-light: var(--brand-hue) 80% 65%;
+    --primary-dark: var(--brand-hue) 80% 45%;
 
     --secondary: 340 20% 15%;
     --secondary-foreground: 30 50% 95%;
@@ -99,7 +119,7 @@
     --muted: 340 20% 18%;
     --muted-foreground: 30 20% 60%;
 
-    --accent: 15 85% 55%;
+    --accent: var(--accent-hue) 85% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
@@ -107,21 +127,22 @@
 
     --border: 340 20% 18%;
     --input: 340 20% 18%;
-    --ring: 340 80% 55%;
+    --ring: var(--brand-hue) 80% 55%;
 
     --gradient-hero: linear-gradient(135deg, hsl(340 20% 8%) 0%, hsl(340 25% 12%) 50%, hsl(340 20% 8%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(340 80% 55%) 0%, hsl(15 85% 55%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
     --gradient-header: linear-gradient(180deg, hsl(340 20% 10%) 0%, hsl(340 20% 8%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(340 20% 10%) 0%, hsl(340 20% 12%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(var(--brand-hue) 70% 40%) 0%, hsl(var(--accent-hue) 75% 45%) 100%);
 
     --sidebar-background: 340 20% 10%;
     --sidebar-foreground: 30 50% 95%;
-    --sidebar-primary: 340 80% 55%;
+    --sidebar-primary: var(--brand-hue) 80% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 340 20% 15%;
     --sidebar-accent-foreground: 30 50% 95%;
     --sidebar-border: 340 20% 18%;
-    --sidebar-ring: 340 80% 55%;
+    --sidebar-ring: var(--brand-hue) 80% 55%;
   }
 }
 
@@ -215,8 +236,7 @@
   }
 
   .product-card:hover {
-    @apply -translate-y-2;
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-hover);
   }
 
   .product-card::before {
@@ -240,6 +260,45 @@
     @apply shadow-lg transition-all duration-300 hover:scale-110;
     box-shadow: var(--shadow-glow);
   }
+
+  /* Section styles for easy customization */
+  .section-padding {
+    @apply py-16 md:py-20 lg:py-24;
+  }
+
+  .section-padding-sm {
+    @apply py-12 md:py-16;
+  }
+
+  /* CTA Section styling */
+  .cta-section {
+    @apply py-16 md:py-20;
+    background: var(--gradient-cta);
+  }
+
+  .cta-section-alt {
+    @apply py-16 md:py-20 bg-secondary/30;
+  }
+
+  /* Glass effect */
+  .glass-effect {
+    @apply backdrop-blur-md bg-background/80 border border-border/50;
+  }
+
+  /* Stagger animation for lists */
+  .stagger-item {
+    @apply opacity-0;
+    animation: stagger-in 0.5s ease-out forwards;
+  }
+
+  .stagger-item:nth-child(1) { animation-delay: 0.05s; }
+  .stagger-item:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-item:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-item:nth-child(4) { animation-delay: 0.2s; }
+  .stagger-item:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-item:nth-child(6) { animation-delay: 0.3s; }
+  .stagger-item:nth-child(7) { animation-delay: 0.35s; }
+  .stagger-item:nth-child(8) { animation-delay: 0.4s; }
 }
 
 @layer utilities {
@@ -260,10 +319,25 @@
 
   /* Text shadow for hero */
   .text-shadow-soft {
-    text-shadow: 0 2px 10px hsl(340 30% 50% / 0.1);
+    text-shadow: 0 2px 10px hsl(var(--brand-hue) 30% 50% / 0.1);
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  .hover-lift:hover {
+    @apply -translate-y-1;
+    box-shadow: var(--shadow-medium);
+  }
+
+  /* Hover glow effect */
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
   }
 }
 
+/* Keyframes */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -279,10 +353,49 @@
   50% { opacity: 0.7; }
 }
 
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.95); opacity: 0; }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
 
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out forwards;
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 20s linear infinite;
 }
