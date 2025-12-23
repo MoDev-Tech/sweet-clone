@@ -156,11 +156,11 @@ export const siteConfig = {
 export const apiConfig = {
   // Set this to your Node.js server URL when deployed to Render
   // Example: 'https://your-app.onrender.com'
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
   
   endpoints: {
-    sendWhatsApp: '/api/send-whatsapp',
     sendOrder: '/api/send-order',
     sendContact: '/api/send-contact',
+    health: '/api/health',
   },
 };

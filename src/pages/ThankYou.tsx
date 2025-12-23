@@ -18,9 +18,9 @@ export default function ThankYou() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="w-24 h-24 mx-auto mb-8 rounded-full bg-green-100 flex items-center justify-center"
+            className="w-24 h-24 mx-auto mb-8 rounded-full bg-primary/10 flex items-center justify-center"
           >
-            <CheckCircle className="w-12 h-12 text-green-600" />
+            <CheckCircle className="w-12 h-12 text-primary" />
           </motion.div>
 
           <motion.h1

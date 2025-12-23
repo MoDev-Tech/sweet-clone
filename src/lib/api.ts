@@ -13,20 +13,44 @@ interface ApiResponse<T = unknown> {
   error?: string;
 }
 
+// Sanitize string input to prevent XSS
+function sanitizeString(str: string): string {
+  return str
+    .replace(/[<>]/g, '') // Remove angle brackets
+    .trim()
+    .slice(0, 1000); // Limit length
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const url = `${apiConfig.baseUrl}${endpoint}`;
 
+  // Validate URL format
   try {
+    new URL(url);
+  } catch {
+    return {
+      success: false,
+      error: 'Invalid API URL configuration',
+    };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
+      signal: controller.signal,
       ...options,
     });
+
+    clearTimeout(timeoutId);
 
     const data = await response.json();
 
@@ -42,6 +66,12 @@ async function fetchApi<T>(
       data,
     };
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return {
+        success: false,
+        error: 'Request timed out. Please try again.',
+      };
+    }
     console.error('API Error:', error);
     return {
       success: false,
@@ -91,21 +121,43 @@ interface ContactData {
 }
 
 export async function sendOrderWhatsApp(data: OrderData): Promise<ApiResponse> {
+  // Sanitize form data before sending
+  const sanitizedFormData = {
+    firstName: sanitizeString(data.formData.firstName),
+    lastName: sanitizeString(data.formData.lastName),
+    email: sanitizeString(data.formData.email),
+    phone: sanitizeString(data.formData.phone),
+    state: sanitizeString(data.formData.state),
+    city: sanitizeString(data.formData.city),
+    zipCode: sanitizeString(data.formData.zipCode),
+    message: data.formData.message ? sanitizeString(data.formData.message) : undefined,
+  };
+
   return fetchApi(apiConfig.endpoints.sendOrder, {
     method: 'POST',
     body: JSON.stringify({
       type: 'order',
-      ...data,
+      formData: sanitizedFormData,
+      orderData: data.orderData,
     }),
   });
 }
 
 export async function sendContactWhatsApp(data: ContactData): Promise<ApiResponse> {
+  // Sanitize form data before sending
+  const sanitizedData = {
+    firstName: sanitizeString(data.firstName),
+    lastName: sanitizeString(data.lastName),
+    email: sanitizeString(data.email),
+    phone: sanitizeString(data.phone),
+    message: sanitizeString(data.message),
+  };
+
   return fetchApi(apiConfig.endpoints.sendContact, {
     method: 'POST',
     body: JSON.stringify({
       type: 'contact',
-      formData: data,
+      formData: sanitizedData,
     }),
   });
 }

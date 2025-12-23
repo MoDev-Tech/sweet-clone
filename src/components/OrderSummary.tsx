@@ -119,7 +119,7 @@ export function OrderSummary({
             <Truck className="w-4 h-4" />
             Shipping
           </span>
-          <span className={shipping === 0 ? 'text-green-600 font-medium' : ''}>
+          <span className={shipping === 0 ? 'text-primary font-medium' : ''}>
             {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
           </span>
         </div>
@@ -146,7 +146,7 @@ export function OrderSummary({
           transition={{ delay: 0.3 }}
           className="flex items-center justify-center gap-2 pt-4 text-sm text-muted-foreground"
         >
-          <Shield className="w-4 h-4 text-green-600" />
+          <Shield className="w-4 h-4 text-primary" />
           <span>Safe & Secure Checkout</span>
         </motion.div>
       </div>
