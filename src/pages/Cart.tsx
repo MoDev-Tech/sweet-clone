@@ -192,12 +192,12 @@ export default function Cart() {
 
                 {/* Coupon & Continue Shopping */}
                 <div className="p-6 flex flex-wrap gap-4 items-center justify-between bg-gradient-to-r from-transparent to-secondary/30">
-                  <div className="flex items-center gap-3 flex-1 min-w-[200px] max-w-md p-3 bg-muted rounded-xl">
-                    <Tag className="w-5 h-5 text-primary" />
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-xl w-full sm:w-auto sm:max-w-md">
+                    <Tag className="w-5 h-5 text-primary flex-shrink-0" />
                     <input
                       type="text"
                       placeholder="Apply Coupon Code"
-                      className="flex-1 bg-transparent outline-none text-sm"
+                      className="flex-1 bg-transparent outline-none text-sm min-w-0"
                     />
                     <Button size="sm">Apply</Button>
                   </div>
