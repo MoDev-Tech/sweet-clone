@@ -6,7 +6,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { OrderSummary } from '@/components/OrderSummary';
 import { useCart } from '@/context/CartContext';
-import { supabase } from '@/integrations/supabase/client';
+import { sendOrderWhatsApp } from '@/lib/api';
+import { siteConfig } from '@/config/site';
 import { toast } from 'sonner';
 
 const checkoutSchema = z.object({
@@ -22,14 +23,7 @@ const checkoutSchema = z.object({
 
 type CheckoutForm = z.infer<typeof checkoutSchema>;
 
-const states = ['California', 'Texas', 'Florida', 'New York', 'Illinois'];
-const citiesByState: Record<string, string[]> = {
-  California: ['Los Angeles', 'San Francisco', 'San Diego'],
-  Texas: ['Houston', 'Austin', 'Dallas'],
-  Florida: ['Miami', 'Orlando', 'Tampa'],
-  'New York': ['New York City', 'Buffalo', 'Albany'],
-  Illinois: ['Chicago', 'Springfield', 'Naperville'],
-};
+const { states, citiesByState } = siteConfig.checkout;
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -72,31 +66,27 @@ export default function Checkout() {
     setIsSubmitting(true);
 
     try {
-      // Send order via WhatsApp
-      const { error } = await supabase.functions.invoke('send-whatsapp', {
-        body: {
-          type: 'order',
-          formData: result.data,
-          orderData: {
-            itemsByCategory: itemsByCategory.map(cat => ({
-              category: cat.category,
-              items: cat.items.map(item => ({
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                category: item.category,
-              })),
-              subtotal: cat.subtotal,
+      const response = await sendOrderWhatsApp({
+        formData: result.data as any,
+        orderData: {
+          itemsByCategory: itemsByCategory.map(cat => ({
+            category: cat.category,
+            items: cat.items.map(item => ({
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              category: item.category,
             })),
-            subtotal,
-            shipping,
-            grandTotal,
-          },
+            subtotal: cat.subtotal,
+          })),
+          subtotal,
+          shipping,
+          grandTotal,
         },
       });
 
-      if (error) {
-        console.error('WhatsApp error:', error);
+      if (!response.success) {
+        console.error('API error:', response.error);
         toast.error('Order placed but notification failed. We will contact you soon.');
       } else {
         toast.success('Order placed successfully!');
@@ -119,10 +109,6 @@ export default function Checkout() {
 
   const availableCities = formData.state ? citiesByState[formData.state] || [] : [];
 
-  const inputVariants = {
-    focus: { scale: 1.01, transition: { duration: 0.2 } },
-  };
-
   return (
     <main className="pt-20">
       <PageHeader
@@ -139,12 +125,13 @@ export default function Checkout() {
           <form onSubmit={handleSubmit}>
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Billing Form */}
-              <div className="lg:col-span-2">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-card rounded-2xl shadow-soft p-8"
-                >
+              <motion.div 
+                className="lg:col-span-2"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="bg-card rounded-2xl shadow-soft p-8 animate-fade-in">
                   <h2 className="font-display text-2xl font-semibold mb-8 flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">1</span>
                     Billing Address
@@ -152,7 +139,7 @@ export default function Checkout() {
 
                   <div className="grid sm:grid-cols-2 gap-6">
                     {/* First Name */}
-                    <motion.div whileFocus="focus" variants={inputVariants}>
+                    <div className="group">
                       <label htmlFor="firstName" className="form-label-ice">
                         First Name *
                       </label>
@@ -162,7 +149,7 @@ export default function Checkout() {
                         name="firstName"
                         value={formData.firstName || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.firstName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                        className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.firstName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="John"
                       />
                       {errors.firstName && (
@@ -174,10 +161,10 @@ export default function Checkout() {
                           {errors.firstName}
                         </motion.p>
                       )}
-                    </motion.div>
+                    </div>
 
                     {/* Last Name */}
-                    <div>
+                    <div className="group">
                       <label htmlFor="lastName" className="form-label-ice">
                         Last Name *
                       </label>
@@ -187,7 +174,7 @@ export default function Checkout() {
                         name="lastName"
                         value={formData.lastName || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.lastName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                        className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.lastName ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="Doe"
                       />
                       {errors.lastName && (
@@ -202,7 +189,7 @@ export default function Checkout() {
                     </div>
 
                     {/* Email */}
-                    <div>
+                    <div className="group">
                       <label htmlFor="email" className="form-label-ice">
                         Email Address *
                       </label>
@@ -212,7 +199,7 @@ export default function Checkout() {
                         name="email"
                         value={formData.email || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.email ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                        className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.email ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="john@example.com"
                       />
                       {errors.email && (
@@ -227,7 +214,7 @@ export default function Checkout() {
                     </div>
 
                     {/* Phone */}
-                    <div>
+                    <div className="group">
                       <label htmlFor="phone" className="form-label-ice">
                         Phone Number *
                       </label>
@@ -237,7 +224,7 @@ export default function Checkout() {
                         name="phone"
                         value={formData.phone || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.phone ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                        className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.phone ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="+1 (555) 000-0000"
                       />
                       {errors.phone && (
@@ -252,7 +239,7 @@ export default function Checkout() {
                     </div>
 
                     {/* State */}
-                    <div>
+                    <div className="group">
                       <label htmlFor="state" className="form-label-ice">
                         State *
                       </label>
@@ -261,7 +248,7 @@ export default function Checkout() {
                         name="state"
                         value={formData.state || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.state ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                        className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.state ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                       >
                         <option value="">Select State</option>
                         {states.map((state) => (
@@ -282,7 +269,7 @@ export default function Checkout() {
                     </div>
 
                     {/* City */}
-                    <div>
+                    <div className="group">
                       <label htmlFor="city" className="form-label-ice">
                         City *
                       </label>
@@ -291,7 +278,7 @@ export default function Checkout() {
                         name="city"
                         value={formData.city || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.city ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                        className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.city ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         disabled={!formData.state}
                       >
                         <option value="">Select City</option>
@@ -313,7 +300,7 @@ export default function Checkout() {
                     </div>
 
                     {/* Zip Code */}
-                    <div>
+                    <div className="group">
                       <label htmlFor="zipCode" className="form-label-ice">
                         Zip / Postal Code *
                       </label>
@@ -323,7 +310,7 @@ export default function Checkout() {
                         name="zipCode"
                         value={formData.zipCode || ''}
                         onChange={handleChange}
-                        className={`form-input-ice ${errors.zipCode ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                        className={`form-input-ice transition-all duration-300 group-hover:shadow-soft ${errors.zipCode ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                         placeholder="12345"
                       />
                       {errors.zipCode && (
@@ -339,7 +326,7 @@ export default function Checkout() {
                   </div>
 
                   {/* Message */}
-                  <div className="mt-6">
+                  <div className="mt-6 group">
                     <label htmlFor="message" className="form-label-ice">
                       Delivery Notes (Optional)
                     </label>
@@ -349,7 +336,7 @@ export default function Checkout() {
                       value={formData.message || ''}
                       onChange={handleChange}
                       rows={4}
-                      className={`form-input-ice resize-none ${errors.message ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
+                      className={`form-input-ice resize-none transition-all duration-300 group-hover:shadow-soft ${errors.message ? 'border-destructive ring-2 ring-destructive/20' : ''}`}
                       placeholder="Special requests or delivery instructions..."
                     />
                     {errors.message && (
@@ -365,8 +352,9 @@ export default function Checkout() {
 
                   {/* Terms */}
                   <motion.div 
-                    className="mt-8 flex items-start gap-3 p-4 bg-secondary/30 rounded-xl"
+                    className="mt-8 flex items-start gap-3 p-4 bg-secondary/30 rounded-xl cursor-pointer hover:bg-secondary/50 transition-all duration-300"
                     whileHover={{ scale: 1.01 }}
+                    onClick={() => setAgreeToTerms(!agreeToTerms)}
                   >
                     <input
                       type="checkbox"
@@ -375,7 +363,7 @@ export default function Checkout() {
                       onChange={(e) => setAgreeToTerms(e.target.checked)}
                       className="w-5 h-5 mt-0.5 rounded border-border text-primary focus:ring-primary"
                     />
-                    <label htmlFor="terms" className="text-sm text-muted-foreground">
+                    <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
                       By clicking the button, you agree to the{' '}
                       <a href="/faq" className="text-primary hover:underline font-medium">
                         Terms and Conditions
@@ -384,8 +372,8 @@ export default function Checkout() {
                   </motion.div>
 
                   <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Button
                       type="submit"
@@ -408,11 +396,16 @@ export default function Checkout() {
                       )}
                     </Button>
                   </motion.div>
-                </motion.div>
-              </div>
+                </div>
+              </motion.div>
 
               {/* Order Summary */}
-              <div className="lg:col-span-1">
+              <motion.div 
+                className="lg:col-span-1"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
                 <OrderSummary
                   itemsByCategory={itemsByCategory}
                   subtotal={subtotal}
@@ -420,7 +413,7 @@ export default function Checkout() {
                   grandTotal={grandTotal}
                   variant="checkout"
                 />
-              </div>
+              </motion.div>
             </div>
           </form>
         </div>
