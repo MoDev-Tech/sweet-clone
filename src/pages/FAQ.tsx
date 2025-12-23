@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
@@ -187,12 +188,12 @@ export default function FAQ() {
             <p className="mb-6 text-primary-foreground/90">
               Can't find what you're looking for? Our team is here to help!
             </p>
-            <a
-              href="/contact"
+            <Link
+              to="/contact"
               className="inline-flex items-center justify-center h-12 px-8 bg-background text-foreground rounded-full font-semibold hover:bg-background/90 transition-colors"
             >
               Contact Us
-            </a>
+            </Link>
           </motion.div>
         </div>
       </section>
