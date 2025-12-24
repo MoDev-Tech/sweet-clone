@@ -1,10 +1,10 @@
 /**
- * API Utility for WhatsApp Integration via Lovable Cloud
+ * API Utility for WhatsApp Integration via Render Server
  * =======================================================
- * This file handles all WhatsApp API calls through Supabase Edge Functions.
+ * This file handles all WhatsApp API calls through the deployed Node.js server.
  */
 
-import { supabase } from '@/integrations/supabase/client';
+const API_BASE_URL = 'https://sweet-clone.onrender.com';
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -83,26 +83,28 @@ export async function sendOrderWhatsApp(data: OrderData): Promise<ApiResponse> {
       }))
     );
 
-    const { data: result, error } = await supabase.functions.invoke('send-whatsapp', {
-      body: {
-        type: 'order',
-        data: {
-          customerName: `${sanitizedFormData.firstName} ${sanitizedFormData.lastName}`,
-          customerPhone: sanitizedFormData.phone,
-          customerAddress: `${sanitizedFormData.city}, ${sanitizedFormData.state} ${sanitizedFormData.zipCode}`,
-          items,
-          totalAmount: data.orderData.grandTotal,
-          notes: sanitizedFormData.message,
-        },
+    const response = await fetch(`${API_BASE_URL}/api/send-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        customerName: `${sanitizedFormData.firstName} ${sanitizedFormData.lastName}`,
+        customerPhone: sanitizedFormData.phone,
+        customerAddress: `${sanitizedFormData.city}, ${sanitizedFormData.state} ${sanitizedFormData.zipCode}`,
+        items,
+        totalAmount: data.orderData.grandTotal,
+        notes: sanitizedFormData.message,
+      }),
     });
 
-    if (error) {
-      console.error('Edge function error:', error);
-      return { success: false, error: error.message };
+    const result = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: result.error || 'Failed to send order' };
     }
 
-    return { success: result?.success ?? false, data: result };
+    return { success: true, data: result };
   } catch (error) {
     console.error('API Error:', error);
     return {
@@ -118,23 +120,26 @@ export async function sendContactWhatsApp(data: ContactData): Promise<ApiRespons
     const sanitizedData = {
       name: sanitizeString(`${data.firstName} ${data.lastName}`),
       email: sanitizeString(data.email),
+      phone: sanitizeString(data.phone),
       subject: `Contact from ${sanitizeString(data.firstName)}`,
       message: sanitizeString(data.message),
     };
 
-    const { data: result, error } = await supabase.functions.invoke('send-whatsapp', {
-      body: {
-        type: 'contact',
-        data: sanitizedData,
+    const response = await fetch(`${API_BASE_URL}/api/send-contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(sanitizedData),
     });
 
-    if (error) {
-      console.error('Edge function error:', error);
-      return { success: false, error: error.message };
+    const result = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: result.error || 'Failed to send message' };
     }
 
-    return { success: result?.success ?? false, data: result };
+    return { success: true, data: result };
   } catch (error) {
     console.error('API Error:', error);
     return {
