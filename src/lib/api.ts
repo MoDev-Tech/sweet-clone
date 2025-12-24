@@ -1,11 +1,10 @@
 /**
- * API Utility for External Node.js Server
- * ========================================
- * This file handles all API calls to your external Node.js server.
- * Update apiConfig.baseUrl in src/config/site.ts to point to your server.
+ * API Utility for WhatsApp Integration via Lovable Cloud
+ * =======================================================
+ * This file handles all WhatsApp API calls through Supabase Edge Functions.
  */
 
-import { apiConfig } from '@/config/site';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -16,68 +15,9 @@ interface ApiResponse<T = unknown> {
 // Sanitize string input to prevent XSS
 function sanitizeString(str: string): string {
   return str
-    .replace(/[<>]/g, '') // Remove angle brackets
+    .replace(/[<>]/g, '')
     .trim()
-    .slice(0, 1000); // Limit length
-}
-
-async function fetchApi<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<ApiResponse<T>> {
-  const url = `${apiConfig.baseUrl}${endpoint}`;
-
-  // Validate URL format
-  try {
-    new URL(url);
-  } catch {
-    return {
-      success: false,
-      error: 'Invalid API URL configuration',
-    };
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      signal: controller.signal,
-      ...options,
-    });
-
-    clearTimeout(timeoutId);
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.message || data.error || 'Something went wrong',
-      };
-    }
-
-    return {
-      success: true,
-      data,
-    };
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      return {
-        success: false,
-        error: 'Request timed out. Please try again.',
-      };
-    }
-    console.error('API Error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Network error. Please try again.',
-    };
-  }
+    .slice(0, 1000);
 }
 
 // ========================================
@@ -121,45 +61,85 @@ interface ContactData {
 }
 
 export async function sendOrderWhatsApp(data: OrderData): Promise<ApiResponse> {
-  // Sanitize form data before sending
-  const sanitizedFormData = {
-    firstName: sanitizeString(data.formData.firstName),
-    lastName: sanitizeString(data.formData.lastName),
-    email: sanitizeString(data.formData.email),
-    phone: sanitizeString(data.formData.phone),
-    state: sanitizeString(data.formData.state),
-    city: sanitizeString(data.formData.city),
-    zipCode: sanitizeString(data.formData.zipCode),
-    message: data.formData.message ? sanitizeString(data.formData.message) : undefined,
-  };
+  try {
+    // Sanitize form data
+    const sanitizedFormData = {
+      firstName: sanitizeString(data.formData.firstName),
+      lastName: sanitizeString(data.formData.lastName),
+      email: sanitizeString(data.formData.email),
+      phone: sanitizeString(data.formData.phone),
+      state: sanitizeString(data.formData.state),
+      city: sanitizeString(data.formData.city),
+      zipCode: sanitizeString(data.formData.zipCode),
+      message: data.formData.message ? sanitizeString(data.formData.message) : undefined,
+    };
 
-  return fetchApi(apiConfig.endpoints.sendOrder, {
-    method: 'POST',
-    body: JSON.stringify({
-      type: 'order',
-      formData: sanitizedFormData,
-      orderData: data.orderData,
-    }),
-  });
+    // Build items list for WhatsApp message
+    const items = data.orderData.itemsByCategory.flatMap(category =>
+      category.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      }))
+    );
+
+    const { data: result, error } = await supabase.functions.invoke('send-whatsapp', {
+      body: {
+        type: 'order',
+        data: {
+          customerName: `${sanitizedFormData.firstName} ${sanitizedFormData.lastName}`,
+          customerPhone: sanitizedFormData.phone,
+          customerAddress: `${sanitizedFormData.city}, ${sanitizedFormData.state} ${sanitizedFormData.zipCode}`,
+          items,
+          totalAmount: data.orderData.grandTotal,
+          notes: sanitizedFormData.message,
+        },
+      },
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: result?.success ?? false, data: result };
+  } catch (error) {
+    console.error('API Error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Network error. Please try again.',
+    };
+  }
 }
 
 export async function sendContactWhatsApp(data: ContactData): Promise<ApiResponse> {
-  // Sanitize form data before sending
-  const sanitizedData = {
-    firstName: sanitizeString(data.firstName),
-    lastName: sanitizeString(data.lastName),
-    email: sanitizeString(data.email),
-    phone: sanitizeString(data.phone),
-    message: sanitizeString(data.message),
-  };
+  try {
+    // Sanitize form data
+    const sanitizedData = {
+      name: sanitizeString(`${data.firstName} ${data.lastName}`),
+      email: sanitizeString(data.email),
+      subject: `Contact from ${sanitizeString(data.firstName)}`,
+      message: sanitizeString(data.message),
+    };
 
-  return fetchApi(apiConfig.endpoints.sendContact, {
-    method: 'POST',
-    body: JSON.stringify({
-      type: 'contact',
-      formData: sanitizedData,
-    }),
-  });
+    const { data: result, error } = await supabase.functions.invoke('send-whatsapp', {
+      body: {
+        type: 'contact',
+        data: sanitizedData,
+      },
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: result?.success ?? false, data: result };
+  } catch (error) {
+    console.error('API Error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Network error. Please try again.',
+    };
+  }
 }
-
-export { fetchApi };
