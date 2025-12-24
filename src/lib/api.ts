@@ -89,12 +89,8 @@ export async function sendOrderWhatsApp(data: OrderData): Promise<ApiResponse> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        customerName: `${sanitizedFormData.firstName} ${sanitizedFormData.lastName}`,
-        customerPhone: sanitizedFormData.phone,
-        customerAddress: `${sanitizedFormData.city}, ${sanitizedFormData.state} ${sanitizedFormData.zipCode}`,
-        items,
-        totalAmount: data.orderData.grandTotal,
-        notes: sanitizedFormData.message,
+        formData: sanitizedFormData,
+        orderData: data.orderData,
       }),
     });
 
@@ -130,7 +126,15 @@ export async function sendContactWhatsApp(data: ContactData): Promise<ApiRespons
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(sanitizedData),
+      body: JSON.stringify({
+        formData: {
+          firstName: sanitizeString(data.firstName),
+          lastName: sanitizeString(data.lastName),
+          email: sanitizeString(data.email),
+          phone: sanitizeString(data.phone),
+          message: sanitizeString(data.message),
+        },
+      }),
     });
 
     const result = await response.json();
