@@ -150,17 +150,4 @@ export const siteConfig = {
   },
 };
 
-// ========================================
-// API CONFIGURATION
-// ========================================
-export const apiConfig = {
-  // Set this to your Node.js server URL when deployed to Render
-  // Example: 'https://your-app.onrender.com'
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
-  
-  endpoints: {
-    sendOrder: '/api/send-order',
-    sendContact: '/api/send-contact',
-    health: '/api/health',
-  },
-};
+// API configuration removed - now using Lovable Cloud backend functions
